@@ -1,4 +1,4 @@
-package com.GenrikhsAlexandr.CriptoApp
+package com.GenrikhsAlexandr.cryptoapp
 
 import org.junit.Test
 

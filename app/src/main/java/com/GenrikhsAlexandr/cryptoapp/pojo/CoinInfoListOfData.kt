@@ -1,4 +1,4 @@
-package com.GenrikhsAlexandr.CriptoApp.pojo
+package com.genrikhsalexandr.cryptoapp.pojo
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
