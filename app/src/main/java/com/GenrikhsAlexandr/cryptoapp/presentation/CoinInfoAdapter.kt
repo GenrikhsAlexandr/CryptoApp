@@ -11,7 +11,6 @@ import com.squareup.picasso.Picasso
 
 class CoinInfoAdapter(private val context: Context) :
     RecyclerView.Adapter<CoinInfoAdapter.CoinInfoViewHolder>() {
-
     var coinInfoList: List<CoinPriceInfo> = listOf()
     fun submitData(coinInfoList: List<CoinPriceInfo>) {
         this.coinInfoList = coinInfoList
@@ -19,7 +18,6 @@ class CoinInfoAdapter(private val context: Context) :
     }
 
     var onCoinClickListener: OnCoinClickListener? = null
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CoinInfoViewHolder {
         return CoinInfoViewHolder(

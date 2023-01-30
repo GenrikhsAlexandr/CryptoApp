@@ -2,25 +2,23 @@ package com.genrikhsalexandr.cryptoapp.api
 
 import com.genrikhsalexandr.cryptoapp.pojo.CoinInfoListOfData
 import com.genrikhsalexandr.cryptoapp.pojo.CoinPriceInfoRawData
-import io.reactivex.rxjava3.core.Single
 import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface ApiService {
-
     @GET("top/totalvolfull")
-    fun getTopCoinsInfo(
+    suspend fun getTopCoinsInfo(
         @Query(QUERY_PARAM_API_KEY) apiKey: String = "",
         @Query(QUERY_PARAM_LIMIT) limit: Int = 10,
         @Query(QUERY_PARAM_TO_SYMBOL) tSym: String = CURRENCY,
-    ): Single<CoinInfoListOfData>
+    ): CoinInfoListOfData
 
     @GET("pricemultifull")
-    fun getFullPriceList(
+    suspend fun getFullPriceList(
         @Query(QUERY_PARAM_API_KEY) apiKey: String = "",
         @Query(QUERY_PARAM_FROM_SYMBOLS) fSyms: String,
         @Query(QUERY_PARAM_TO_SYMBOLS) tSyms: String = CURRENCY,
-    ): Single<CoinPriceInfoRawData>
+    ): CoinPriceInfoRawData
 
     companion object {
         private const val QUERY_PARAM_API_KEY = "api_key"
@@ -30,5 +28,4 @@ interface ApiService {
         private const val QUERY_PARAM_FROM_SYMBOLS = "fsyms"
         private const val CURRENCY = "USD"
     }
-
 }

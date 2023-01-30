@@ -1,49 +1,57 @@
 package com.genrikhsalexandr.cryptoapp.presentation
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
+import androidx.lifecycle.viewModelScope
 import com.genrikhsalexandr.cryptoapp.api.ApiFactory
 import com.genrikhsalexandr.cryptoapp.database.AppDatabase
 import com.genrikhsalexandr.cryptoapp.pojo.CoinPriceInfo
 import com.genrikhsalexandr.cryptoapp.pojo.CoinPriceInfoRawData
 import com.google.gson.Gson
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CoinViewModel(application: Application) : AndroidViewModel(application) {
-
+    private val api = ApiFactory.apiService
     private val db = AppDatabase.getInstance(application)
-    private val compositeDisposable = CompositeDisposable()
     val priceList = db.coinPriceInfoDao().getPriceList()
 
-    fun getDetailInfo(fSym: String): LiveData<CoinPriceInfo> {
+    fun getDetailInfo(fSym: String): Flow<CoinPriceInfo> {
         return db.coinPriceInfoDao().getPriceInfoAboutCoin(fSym)
     }
 
     init {
-        loadData()
+        startLoadingJob()
     }
 
-    private fun loadData() {
-        val disposable = ApiFactory.apiService.getTopCoinsInfo()
-            .map { it.data?.joinToString(",") { it.coinInfo?.name.toString() } ?: toString() }
-            .flatMap { ApiFactory.apiService.getFullPriceList(fSyms = it) }
-            .map { getPriceListFromRawData(it) }
-            .delay(10, TimeUnit.SECONDS)
-            .repeat()
-            .retry()
-            .subscribeOn(Schedulers.io())
-            .subscribe({
-                db.coinPriceInfoDao().insertPriceList(it)
-                Log.d("TEST_OF_LOADING_DATA", "Success: $it")
+    private fun startLoadingJob() {
+        viewModelScope.launch() {
+            try {
+                while (true) {
+                    loadData()
+                    delay(10_000)
+                }
+            } catch (e: Exception) {
+                onError()
+            }
+        }
+    }
 
-            }, {
-                Log.d("TEST_OF_LOADING_DATA", "Failure: ${it.message}")
-            })
-        compositeDisposable.add(disposable)
+    private suspend fun onError() {
+        delay(10_000)
+        startLoadingJob()
+    }
+
+    private suspend fun loadData() = withContext(Dispatchers.IO) {
+        val coinInfo = api.getTopCoinsInfo().let { response ->
+            response.data?.joinToString(",") { it.coinInfo?.name.toString() }.toString()
+        }
+        val priceList = api.getFullPriceList(fSyms = coinInfo)
+        val list = getPriceListFromRawData(priceList)
+        db.coinPriceInfoDao().insertPriceList(list)
     }
 
     private fun getPriceListFromRawData(
@@ -64,10 +72,5 @@ class CoinViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         return result
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        compositeDisposable.dispose()
     }
 }
